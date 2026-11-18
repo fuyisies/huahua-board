@@ -1,0 +1,14 @@
+{
+  "version": "0.7.3",
+  "exe_bytes": 1718784,
+  "sha256": "e576a84eb651412f450a6e0b20d6c5b86fc9cd49af1bf0910aab8d5cff871d25",
+  "checks": [
+    "Windows x64 cross-compilation passed",
+    "Existing layout, ordering, easing and zoom algorithm tests passed",
+    "Cursor resources: all frame bounds, hotspots and payload lengths validated; previews inspected",
+    "Cursor priority reviewed: active drag, resize, viewer buttons, image, canvas edge"
+  ],
+  "limitations": [
+    "Windows GUI, IME and rename display not tested on a real Windows host"
+  ]
+}
