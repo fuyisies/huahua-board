@@ -4,6 +4,17 @@
 #include <iostream>
 #include <fstream>
 int main(){
+ // Long images retain useful width; decoded allocation remains bounded.
+ auto strip=decodeSize(1000,10000,640);assert(strip.first>=630&&strip.second>=6300);
+ auto landscape=decodeSize(10000,1000,640);assert(landscape.first==strip.second&&landscape.second==strip.first);
+ for(unsigned w:{1u,100u,1000u,10000u,100000u})for(unsigned h:{1u,100u,1000u,10000u,100000u})for(int limit:{32,640,4096}){
+ auto d=decodeSize(w,h,limit);assert(d.first>0&&d.second>0&&d.first<=w&&d.second<=h);
+ assert(d.first<=16384&&d.second<=16384);
+ assert(double(d.first)*d.second<=(limit>=4096?24.0:4.0)*1024*1024);
+ }
+ auto longCards=masonry({.05f,20.f},0,640,2,0);
+ assert(std::abs(longCards[0].h-6400)<.01f);assert(std::abs(longCards[1].h-16)<.01f);
+
  auto p=masonry({1,2,.5,1},10,620,3,10);assert(p.size()==4);assert(p[0].x==10&&p[1].x==220&&p[2].x==430);assert(p[3].x==220&&p[3].y==110);
  std::mt19937 g(123);std::uniform_real_distribution<float>d(.15f,6.f);for(int cols=1;cols<=8;cols++){std::vector<float>r(200);for(auto&x:r)x=d(g);auto q=masonry(r,0,1200,cols,14);for(size_t i=0;i<q.size();i++){assert(q[i].x>=0&&q[i].x+q[i].w<1200.01f);for(size_t j=0;j<i;j++){auto a=q[i],b=q[j];assert(a.x+a.w<=b.x+.01f||b.x+b.w<=a.x+.01f||a.y+a.h<=b.y+.01f||b.y+b.h<=a.y+.01f);}}}
  for(int from=0;from<10;from++)for(int before=0;before<=10;before++){std::vector<int>v{0,1,2,3,4,5,6,7,8,9};reorder(v,from,before);assert(v.size()==10);int pos=before-(before>from);assert(v[pos]==from);auto s=v;std::sort(s.begin(),s.end());for(int i=0;i<10;i++)assert(s[i]==i);}

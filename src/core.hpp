@@ -8,7 +8,7 @@ struct Box{float x=0,y=0,w=0,h=0;bool contains(float a,float b)const{return a>=x
 inline int swapTarget(const std::vector<Box>&boxes,Box viewport,float scroll,float x,float y,int source){if(!viewport.contains(x,y))return -1;for(int i=int(boxes.size())-1;i>=0;--i){auto b=boxes[i];b.y-=scroll;if(b.contains(x,y))return i==source?-1:i;}return -1;}
 template<class T>bool swapItems(std::vector<T>&v,int a,int b){if(a<0||b<0||a>=int(v.size())||b>=int(v.size())||a==b)return false;std::swap(v[a],v[b]);return true;}
 inline float approach(float v,float t,float dt){return t+(v-t)*std::exp(-16*dt);}
-inline std::vector<Box> masonry(const std::vector<float>&ratios,float x,float width,int cols,float gap){cols=std::max(1,cols);float cw=(width-gap*(cols-1))/cols;std::vector<float>ys(cols,0);std::vector<Box>out;for(float r:ratios){auto c=std::min_element(ys.begin(),ys.end())-ys.begin();float h=cw/std::clamp(r,.12f,8.f);out.push_back({x+c*(cw+gap),ys[c],cw,h});ys[c]+=h+gap;}return out;}
+inline std::vector<Box> masonry(const std::vector<float>&ratios,float x,float width,int cols,float gap){cols=std::max(1,cols);float cw=(width-gap*(cols-1))/cols;std::vector<float>ys(cols,0);std::vector<Box>out;for(float r:ratios){auto c=std::min_element(ys.begin(),ys.end())-ys.begin();float h=cw/std::clamp(r,.00001f,100000.f);out.push_back({x+c*(cw+gap),ys[c],cw,h});ys[c]+=h+gap;}return out;}
 template<class T>void reorder(std::vector<T>&v,int from,int before){if(from<0||from>=(int)v.size())return;before=std::clamp(before,0,(int)v.size());auto value=std::move(v[from]);v.erase(v.begin()+from);if(before>from)--before;v.insert(v.begin()+before,std::move(value));}
 // CSS cubic-bezier(.22,1,.36,1): solve x(t), then evaluate y(t).
 inline float webEase(float x){x=std::clamp(x,0.f,1.f);if(x==0||x==1)return x;float lo=0,hi=1,t=x;for(int i=0;i<16;i++){t=(lo+hi)/2;float u=1-t;float bx=3*u*u*t*.22f+3*u*t*t*.36f+t*t*t;if(bx<x)lo=t;else hi=t;}return 1-std::pow(1-t,3);}
@@ -18,3 +18,18 @@ struct Tween{float from=0,to=0,value=0;double start=0,duration=.35;void set(floa
 inline float zoomPanOffset(float offset,float pointerFromCenter,float ratio){return pointerFromCenter*(1-ratio)+offset*ratio;}
 
 inline std::filesystem::path uniqueImagePath(const std::filesystem::path&dir,const std::wstring&name,const std::wstring&ext){auto p=dir/(name+ext);int n=2;while(std::filesystem::exists(p))p=dir/(name+L" ("+std::to_wstring(n++)+L")"+ext);return p;}
+
+
+// Preserve the width of portrait strips (height of landscape strips), rather
+// than crushing every image to a 640px longest edge. Bound memory and texture size.
+inline std::pair<unsigned,unsigned> decodeSize(unsigned w,unsigned h,int limit){
+ if(!w||!h)return {0,0};
+ double scale;
+ if(limit<=32)scale=std::min(1.0,double(limit)/std::max(w,h));
+ else {
+ const double shortTarget=limit>=4096?2048.0:640.0;
+ const double pixels=limit>=4096?24.0*1024*1024:4.0*1024*1024;
+ scale=std::min({1.0,shortTarget/std::min(w,h),16384.0/std::max(w,h),std::sqrt(pixels/(double(w)*h))});
+ }
+ return {std::max(1u,unsigned(w*scale)),std::max(1u,unsigned(h*scale))};
+}
